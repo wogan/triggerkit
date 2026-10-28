@@ -35,17 +35,17 @@ npm add -D triggerkit
 
 ```typescript
 // trigger.config.ts
-import { defineConfig } from "@trigger.dev/sdk/v3";
-import { triggerkit } from "triggerkit";
+import { defineConfig } from '@trigger.dev/sdk/v3';
+import { triggerkit } from 'triggerkit';
 
 export default defineConfig({
-  project: "your-project-id",
-  runtime: "node",
+  project: 'your-project-id',
+  runtime: 'node',
   build: {
     extensions: [
-      triggerkit(), // Zero config - just works!
-    ],
-  },
+      triggerkit() // Zero config - just works!
+    ]
+  }
 });
 ```
 
@@ -53,15 +53,15 @@ export default defineConfig({
 
 ```typescript
 // src/lib/server/email.ts
-import { EMAIL_API_KEY } from "$env/static/private";
-import { PUBLIC_APP_URL } from "$env/static/public";
+import { EMAIL_API_KEY } from '$env/static/private';
+import { PUBLIC_APP_URL } from '$env/static/public';
 
 export async function sendWelcomeEmail(userId: string, email: string) {
   // Your existing SvelteKit function - no changes needed!
   const response = await fetch(`${PUBLIC_APP_URL}/api/email`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${EMAIL_API_KEY}` },
-    body: JSON.stringify({ userId, email, type: "welcome" }),
+    method: 'POST',
+    headers: { Authorization: `Bearer ${EMAIL_API_KEY}` },
+    body: JSON.stringify({ userId, email, type: 'welcome' })
   });
 
   return { success: response.ok, userId };
@@ -85,11 +85,11 @@ export class UserService {
 
 ```typescript
 // src/trigger/welcome.ts
-import { sendWelcomeEmail, UserService } from "virtual:triggerkit";
-import { task } from "@trigger.dev/sdk/v3";
+import { sendWelcomeEmail, UserService } from 'virtual:triggerkit';
+import { task } from '@trigger.dev/sdk/v3';
 
 export const welcomeEmailTask = task({
-  id: "welcome-email",
+  id: 'welcome-email',
   run: async (payload: { userId: string; email: string }) => {
     // Full IntelliSense and type checking!
     const userService = new UserService(process.env.USER_API_KEY);
@@ -97,7 +97,7 @@ export const welcomeEmailTask = task({
 
     const result = await sendWelcomeEmail(payload.userId, payload.email);
     return { result, user };
-  },
+  }
 });
 ```
 
@@ -128,8 +128,8 @@ interface PluginOptions {
    * @default { mode: "individual" }
    */
   exportStrategy?: {
-    mode: "individual" | "grouped" | "mixed";
-    groupBy?: "file" | "folder";
+    mode: 'individual' | 'grouped' | 'mixed';
+    groupBy?: 'file' | 'folder';
     groupPrefix?: string;
   };
 
@@ -148,7 +148,7 @@ interface PluginOptions {
    * Debug logging level
    * @default "minimal"
    */
-  debugLevel?: "minimal" | "verbose" | "off";
+  debugLevel?: 'minimal' | 'verbose' | 'off';
 }
 ```
 
@@ -158,7 +158,7 @@ interface PluginOptions {
 
 ```typescript
 // Simple imports
-import { getTimestamp, sendEmail, UserService } from "virtual:triggerkit";
+import { getTimestamp, sendEmail, UserService } from 'virtual:triggerkit';
 ```
 
 #### Grouped Exports
@@ -166,14 +166,14 @@ import { getTimestamp, sendEmail, UserService } from "virtual:triggerkit";
 ```typescript
 triggerkit({
   exportStrategy: {
-    mode: "grouped",
-    groupBy: "folder", // or "file" or "custom"
-    groupPrefix: "api",
-  },
+    mode: 'grouped',
+    groupBy: 'folder', // or "file" or "custom"
+    groupPrefix: 'api'
+  }
 });
 
 // Organized imports
-import { api_auth, api_email, api_users } from "virtual:triggerkit";
+import { api_auth, api_email, api_users } from 'virtual:triggerkit';
 api_auth.login(credentials);
 api_users.getUser(id);
 api_email.sendWelcome(email);
@@ -186,8 +186,8 @@ api_email.sendWelcome(email);
 import {
   api_auth, // Grouped
   sendEmail, // Individual
-  UserService, // Individual class
-} from "virtual:triggerkit";
+  UserService // Individual class
+} from 'virtual:triggerkit';
 ```
 
 ## 🔧 Debug Levels
@@ -196,7 +196,7 @@ Control how much information Triggerkit logs
 
 ```typescript
 triggerkit({
-  debugLevel: "minimal", // Default - clean output
+  debugLevel: 'minimal' // Default - clean output
   // debugLevel: "verbose"  // Detailed debugging info
   // debugLevel: "off"      // Silent (production)
 });
@@ -209,7 +209,7 @@ triggerkit({
 You can access all discovered functions through the functions object:
 
 ```typescript
-import { functions } from "virtual:triggerkit";
+import { functions } from 'virtual:triggerkit';
 // Call a discovered function
 await functions.sendWelcomeEmail(userId);
 ```
@@ -221,9 +221,7 @@ await functions.sendWelcomeEmail(userId);
 export class PaymentService {
   constructor(private apiKey: string) {}
 
-  async processPayment<T extends PaymentData>(
-    data: T,
-  ): Promise<PaymentResult<T>> {
+  async processPayment<T extends PaymentData>(data: T): Promise<PaymentResult<T>> {
     // Your payment logic
   }
 
@@ -233,10 +231,10 @@ export class PaymentService {
 }
 
 // In Trigger.dev - full type support!
-import { PaymentService } from "virtual:triggerkit";
+import { PaymentService } from 'virtual:triggerkit';
 
 const service = new PaymentService(process.env.STRIPE_KEY);
-const result = await service.processPayment({ amount: 100, currency: "USD" });
+const result = await service.processPayment({ amount: 100, currency: 'USD' });
 ```
 
 #### Environment Variables
@@ -245,15 +243,15 @@ Triggerkit automatically handles SvelteKit environment variables:
 
 ```typescript
 // SvelteKit code
-import { DATABASE_URL } from "$env/static/private";
-import { PUBLIC_API_URL } from "$env/static/public";
+import { DATABASE_URL } from '$env/static/private';
+import { PUBLIC_API_URL } from '$env/static/public';
 
 export async function connectDB() {
   // Uses DATABASE_URL automatically
 }
 
 // In Trigger.dev - works seamlessly!
-import { connectDB } from "virtual:triggerkit";
+import { connectDB } from 'virtual:triggerkit';
 await connectDB(); // DATABASE_URL is available via process.env
 ```
 
@@ -265,7 +263,7 @@ await connectDB(); // DATABASE_URL is available via process.env
 // Generated types preserve everything:
 export declare function processUser<T extends User>(
   user: T,
-  options: ProcessOptions,
+  options: ProcessOptions
 ): Promise<ProcessedUser<T>>;
 
 export declare class UserService {

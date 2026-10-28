@@ -10,19 +10,8 @@
     "declarationDir": "./dist",
     "outDir": "./dist",
     "esModuleInterop": true,
-    "types": [
-      "vite/client"
-    ]
+    "types": ["vite/client"]
   },
-  "include": [
-    "src/**/*.d.ts",
-    "src/**/*.ts",
-    "src/**/*.svelte",
-    "trigger.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts"
-  ]
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.svelte", "trigger.config.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

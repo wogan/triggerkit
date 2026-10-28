@@ -26,19 +26,19 @@ npm install
 
 ## Common Commands
 
-| Task | Command |
-| --- | --- |
-| Install deps | `npm install` |
-| Build (bundle + package) | `npm run build` |
-| Watch build | `npm run dev` |
-| Run tests (watch) | `npm test` |
-| Run tests once | `npx vitest run` |
-| Run tests + coverage | `npm run test:coverage` |
-| Lint (prettier check + eslint) | `npm run lint` |
-| Format | `npm run format` |
-| Add a changeset | `npm run changeset` |
-| Bump versions | `npm run version` |
-| Publish | `npm run release` |
+| Task                           | Command                 |
+| ------------------------------ | ----------------------- |
+| Install deps                   | `npm install`           |
+| Build (bundle + package)       | `npm run build`         |
+| Watch build                    | `npm run dev`           |
+| Run tests (watch)              | `npm test`              |
+| Run tests once                 | `npx vitest run`        |
+| Run tests + coverage           | `npm run test:coverage` |
+| Lint (prettier check + eslint) | `npm run lint`          |
+| Format                         | `npm run format`        |
+| Add a changeset                | `npm run changeset`     |
+| Bump versions                  | `npm run version`       |
+| Publish                        | `npm run release`       |
 
 - `npm run build` = `vite build` (lib mode, ES) → `dist/index.js`, then `npm run package`.
 - `npm run package` = `svelte-kit sync && svelte-package && publint && cp README.md dist/`.
@@ -90,7 +90,7 @@ Everything lives in `src/lib/`:
 
 - `extractExportedItems(content, includeTypes)` — **regex-based** extraction of exported
   functions, classes, and constants (methods/properties/constructor for classes). This is
-  the heart of the plugin and is *not* a real TS AST parse — it is fragile.
+  the heart of the plugin and is _not_ a real TS AST parse — it is fragile.
 - `transformSvelteKitEnvImports(source)` — rewrites `import { X } from '$env/static/...'`
   into `const { X } = process.env;`.
 - `generateVirtualModuleContent` + `generateIndividualExports` / `generateGroupedExports` /
@@ -115,7 +115,7 @@ Everything lives in `src/lib/`:
 
 - **Regex-based parsing.** `extractExportedItems` and `extractFunctionSignatures` rely on
   regex patterns, not a TS parser. New export syntax may not be detected. When changing
-  extraction, update the corresponding regex *and* the type-declaration path — they must
+  extraction, update the corresponding regex _and_ the type-declaration path — they must
   stay in sync (see the 2.0.2 fix, where class support was added to
   `generateFunctionTypeDeclarations` but had been missing before).
 - **Two near-duplicate extractors.** `extractExportedItems` (used for the virtual module +
@@ -132,7 +132,7 @@ Everything lives in `src/lib/`:
 - **`context` is typed `any`** in most helper functions (the Trigger.dev `BuildExtension`
   context type isn't threaded through).
 - **Generated files are consumer-side.** `src/virtual-triggerkit.d.ts` is written into the
-  *user's* project at build time. This repo's own `src/` is the plugin source, not a
+  _user's_ project at build time. This repo's own `src/` is the plugin source, not a
   SvelteKit app.
 - **`.gitignore`** ignores `/src/routes`, `/src/lib/server`, `/src/lib/client`, `/src/trigger`
   — these are consumer-project directories, not part of this package. Don't create them here.

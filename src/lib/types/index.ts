@@ -25,14 +25,14 @@ export interface PluginOptions {
    * @default "individual"
    */
   exportStrategy?: {
-    mode: "individual" | "grouped" | "mixed";
+    mode: 'individual' | 'grouped' | 'mixed';
 
     /**
      * When mode is "grouped", group functions by:
      * - "file": group by source file
      * - "folder": group by source folder
      */
-    groupBy?: "file" | "folder";
+    groupBy?: 'file' | 'folder';
 
     /**
      * Namespace prefix for groups (e.g., "auth", "user", "api")
@@ -52,10 +52,10 @@ export interface PluginOptions {
   };
 
   /**
- * Debug logging level
- * @default "minimal"
- */
-  debugLevel?: "minimal" | "verbose" | "off";
+   * Debug logging level
+   * @default "minimal"
+   */
+  debugLevel?: 'minimal' | 'verbose' | 'off';
 }
 
 export interface CachedFile {

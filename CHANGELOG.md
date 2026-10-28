@@ -49,13 +49,13 @@
   ```typescript
   // Now supported!
   export class UserService {
-  	constructor(private apiKey: string) {}
-  	async getUser(id: string): Promise<User> {
-  		/* ... */
-  	}
-  	static validateEmail(email: string): boolean {
-  		/* ... */
-  	}
+    constructor(private apiKey: string) {}
+    async getUser(id: string): Promise<User> {
+      /* ... */
+    }
+    static validateEmail(email: string): boolean {
+      /* ... */
+    }
   }
   ```
 
@@ -103,29 +103,29 @@
 
   ```typescript
   interface PluginOptions {
-  	// Existing options remain unchanged
-  	includeDirs?: string[];
-  	filePatterns?: string[];
-  	exclude?: string[];
+    // Existing options remain unchanged
+    includeDirs?: string[];
+    filePatterns?: string[];
+    exclude?: string[];
 
-  	// NEW: Export organization
-  	exportStrategy?: {
-  		mode: 'individual' | 'grouped' | 'mixed';
-  		groupBy?: 'file' | 'folder' | 'custom';
-  		groupingFunction?: (filePath: string, exportName: string) => string;
-  		groupPrefix?: string;
-  	};
+    // NEW: Export organization
+    exportStrategy?: {
+      mode: 'individual' | 'grouped' | 'mixed';
+      groupBy?: 'file' | 'folder' | 'custom';
+      groupingFunction?: (filePath: string, exportName: string) => string;
+      groupPrefix?: string;
+    };
 
-  	// NEW: Export type control
-  	includeTypes?: {
-  		functions?: boolean;
-  		classes?: boolean;
-  		constants?: boolean;
-  		variables?: boolean;
-  	};
+    // NEW: Export type control
+    includeTypes?: {
+      functions?: boolean;
+      classes?: boolean;
+      constants?: boolean;
+      variables?: boolean;
+    };
 
-  	// NEW: Debug control
-  	debugLevel?: 'minimal' | 'verbose' | 'off';
+    // NEW: Debug control
+    debugLevel?: 'minimal' | 'verbose' | 'off';
   }
   ```
 
@@ -134,17 +134,17 @@
   ```typescript
   // NEW: Enhanced export item structure
   interface ExportedItem {
-  	name: string;
-  	type: 'function' | 'class' | 'const' | 'variable';
-  	signature: string;
-  	isAsync: boolean;
-  	returnType: string;
-  	params: string;
-  	classInfo?: {
-  		methods: Array<{ name: string; signature: string; isStatic: boolean }>;
-  		properties: Array<{ name: string; type: string; isStatic: boolean }>;
-  		constructor?: { params: string };
-  	};
+    name: string;
+    type: 'function' | 'class' | 'const' | 'variable';
+    signature: string;
+    isAsync: boolean;
+    returnType: string;
+    params: string;
+    classInfo?: {
+      methods: Array<{ name: string; signature: string; isStatic: boolean }>;
+      properties: Array<{ name: string; type: string; isStatic: boolean }>;
+      constructor?: { params: string };
+    };
   }
   ```
 
@@ -182,22 +182,22 @@
   ```typescript
   // NEW: Grouped exports (when enabled)
   export const api_auth = {
-  	login,
-  	logout,
-  	validateToken
+    login,
+    logout,
+    validateToken
   };
 
   // NEW: Class exports with full typing
   export declare class UserService {
-  	constructor(apiKey: string);
-  	getUser(id: string): Promise<User>;
-  	static validateEmail(email: string): boolean;
+    constructor(apiKey: string);
+    getUser(id: string): Promise<User>;
+    static validateEmail(email: string): boolean;
   }
 
   // ENHANCED: Better function type preservation
   export declare function processData<T extends DataType>(
-  	data: T,
-  	options: ProcessOptions
+    data: T,
+    options: ProcessOptions
   ): Promise<ProcessedData<T>>;
   ```
 
@@ -224,15 +224,15 @@
   ```typescript
   // Before (still works)
   triggerkit({
-  	includeDirs: ['src/lib/server']
+    includeDirs: ['src/lib/server']
   });
 
   // After (enhanced)
   triggerkit({
-  	includeDirs: ['src/lib/server'],
-  	includeTypes: { functions: true, classes: true },
-  	exportStrategy: { mode: 'grouped', groupBy: 'folder' },
-  	debugLevel: 'minimal'
+    includeDirs: ['src/lib/server'],
+    includeTypes: { functions: true, classes: true },
+    exportStrategy: { mode: 'grouped', groupBy: 'folder' },
+    debugLevel: 'minimal'
   });
   ```
 
