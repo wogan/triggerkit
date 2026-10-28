@@ -75,7 +75,7 @@
     "package": "svelte-kit sync && svelte-package && publint && cp README.md dist/",
     "generate-virtual-types": "node scripts/generate-virtual-types.js",
     "changeset": "changeset",
-    "dev": "vite build --watch",
+    "dev": "svelte-kit sync && vite build --watch",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
