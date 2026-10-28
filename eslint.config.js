@@ -8,27 +8,31 @@ import ts from 'typescript-eslint';
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 export default ts.config(
-	includeIgnoreFile(gitignorePath),
-	js.configs.recommended,
-	...ts.configs.recommended,
-	...svelte.configs['flat/recommended'],
-	prettier,
-	...svelte.configs['flat/prettier'],
-	{
-		languageOptions: {
-			globals: {
-				...globals.browser,
-				...globals.node
-			}
-		}
-	},
-	{
-		files: ['**/*.svelte'],
+  includeIgnoreFile(gitignorePath),
+  js.configs.recommended,
+  ...ts.configs.recommended,
+  ...svelte.configs['flat/recommended'],
+  prettier,
+  ...svelte.configs['flat/prettier'],
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    rules: {
+      // Trigger.dev's BuildExtension context type isn't threaded through helpers; `any` is the accepted pattern (see AGENTS.md)
+      '@typescript-eslint/no-explicit-any': 'off'
+    }
+  },
+  {
+    files: ['**/*.svelte'],
 
-		languageOptions: {
-			parserOptions: {
-				parser: ts.parser
-			}
-		}
-	}
+    languageOptions: {
+      parserOptions: {
+        parser: ts.parser
+      }
+    }
+  }
 );

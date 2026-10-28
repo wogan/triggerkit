@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { triggerkit } from '../lib/triggerkit';
-import type { BuildExtension } from "@trigger.dev/build/extensions";
-import path from 'path';
+import type { BuildExtension } from '@trigger.dev/build/extensions';
 import fs from 'fs';
 import { fail } from 'assert';
 
@@ -56,9 +55,7 @@ describe('Triggerkit Extension', () => {
     // Setup mocks
     fs.promises.readdir = vi.fn().mockImplementation((path) => {
       if (path.includes('src/lib')) {
-        return Promise.resolve([
-          { name: 'db.ts', isFile: () => true, isDirectory: () => false }
-        ]);
+        return Promise.resolve([{ name: 'db.ts', isFile: () => true, isDirectory: () => false }]);
       }
       return Promise.resolve([]);
     });
@@ -117,9 +114,9 @@ describe('Triggerkit Extension', () => {
       await extension.onBuildStart(mockContext);
 
       // Mock fs.readdir to return files
-      fs.promises.readdir = vi.fn().mockResolvedValue([
-        { name: 'db.ts', isFile: () => true, isDirectory: () => false }
-      ]);
+      fs.promises.readdir = vi
+        .fn()
+        .mockResolvedValue([{ name: 'db.ts', isFile: () => true, isDirectory: () => false }]);
 
       // Create a mock file with exported functions
       const fileWithFunctions = `
@@ -142,9 +139,8 @@ describe('Triggerkit Extension', () => {
         // Verify the plugin was registered or at least some logging happened
         expect(
           mockContext.registerPlugin.mock.calls.length > 0 ||
-          mockContext.logger.log.mock.calls.length > 0
+            mockContext.logger.log.mock.calls.length > 0
         ).toBeTruthy();
-
       } catch (error) {
         console.error('Error in onBuildStart:', error);
         fail(`onBuildStart threw an error: ${error}`);

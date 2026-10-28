@@ -1,20 +1,20 @@
-import fs from "node:fs"
+import fs from 'node:fs';
 import path from 'node:path';
-import type { BuildExtension } from "@trigger.dev/build/extensions";
-import type { Plugin, OnLoadResult } from "esbuild";
-import type { CachedFile, ExportedItem, FileWithExports, FileWithFunctions, PluginOptions } from './types/index.js';
+import type { BuildExtension } from '@trigger.dev/build/extensions';
+import type { Plugin, OnLoadResult } from 'esbuild';
+import type { CachedFile, ExportedItem, FileWithExports, PluginOptions } from './types/index.js';
 
 const VIRTUAL_MODULE_ID = 'virtual:triggerkit';
 const NAMESPACE = 'triggerkit-namespace';
 
 function triggerkit(options?: PluginOptions): BuildExtension {
   const resolvedOptions: Required<PluginOptions> = {
-    includeDirs: options?.includeDirs || ["src/lib"],
-    filePatterns: options?.filePatterns || [".ts", ".js"],
-    exclude: options?.exclude || ["test.", "spec.", ".d.ts"],
+    includeDirs: options?.includeDirs || ['src/lib'],
+    filePatterns: options?.filePatterns || ['.ts', '.js'],
+    exclude: options?.exclude || ['test.', 'spec.', '.d.ts'],
     exportStrategy: {
-      mode: "individual",
-      groupBy: "folder",
+      mode: 'individual',
+      groupBy: 'folder',
       ...options?.exportStrategy
     },
     includeTypes: {
@@ -24,24 +24,30 @@ function triggerkit(options?: PluginOptions): BuildExtension {
       variables: false,
       ...options?.includeTypes
     },
-    debugLevel: options?.debugLevel || "minimal"
-  }
+    debugLevel: options?.debugLevel || 'minimal'
+  };
 
   // Keep track of file states for rebuilding
   const fileCache: Map<string, CachedFile> = new Map();
   const envVars = new Set<string>();
 
   return {
-    name: "triggerkit",
+    name: 'triggerkit',
 
     onBuildStart: async (context) => {
-      if (resolvedOptions.debugLevel !== "off") {
-        context.logger.log("🚀 Triggerkit extension starting!");
+      if (resolvedOptions.debugLevel !== 'off') {
+        context.logger.log('🚀 Triggerkit extension starting!');
       }
 
-      if (resolvedOptions.debugLevel === "verbose") {
-        context.logger.log("📋 Export strategy:", resolvedOptions.exportStrategy.mode);
-        context.logger.log("🎯 Include types:", Object.entries(resolvedOptions.includeTypes).filter(([_, v]) => v).map(([k, _]) => k).join(', '));
+      if (resolvedOptions.debugLevel === 'verbose') {
+        context.logger.log('📋 Export strategy:', resolvedOptions.exportStrategy.mode);
+        context.logger.log(
+          '🎯 Include types:',
+          Object.entries(resolvedOptions.includeTypes)
+            .filter(([, v]) => v)
+            .map(([k]) => k)
+            .join(', ')
+        );
       }
       // Load environment variables from SvelteKit's .env files
       await loadSvelteKitEnvironment(context, resolvedOptions.debugLevel);
@@ -56,7 +62,7 @@ function triggerkit(options?: PluginOptions): BuildExtension {
 
         // Check if the folder exists
         if (!fs.existsSync(dirPath)) {
-          if (resolvedOptions.debugLevel !== "off") {
+          if (resolvedOptions.debugLevel !== 'off') {
             context.logger.warn(`⚠️  Directory ${includeDir} does not exist, skipping`);
           }
           continue;
@@ -82,24 +88,27 @@ function triggerkit(options?: PluginOptions): BuildExtension {
       }
 
       // Debug: Log all cached files
-      if (resolvedOptions.debugLevel === "verbose") {
-        context.logger.log("📝 Files in cache:");
+      if (resolvedOptions.debugLevel === 'verbose') {
+        context.logger.log('📝 Files in cache:');
         for (const [filePath, cachedFile] of fileCache.entries()) {
-          const exportedItems = extractExportedItems(cachedFile.content || '', resolvedOptions.includeTypes);
-          const exportNames = exportedItems.map(item => `${item.name}(${item.type})`);
+          const exportedItems = extractExportedItems(
+            cachedFile.content || '',
+            resolvedOptions.includeTypes
+          );
+          const exportNames = exportedItems.map((item) => `${item.name}(${item.type})`);
           context.logger.log(`  - ${filePath}: [${exportNames.join(', ')}]`);
         }
       }
 
       // Only proceed if we have files to process
       if (fileCache.size === 0) {
-        if (resolvedOptions.debugLevel !== "off") {
-          context.logger.warn("❌ No export files found, triggerkit will not be active");
+        if (resolvedOptions.debugLevel !== 'off') {
+          context.logger.warn('❌ No export files found, triggerkit will not be active');
         }
         return;
       }
 
-      if (resolvedOptions.debugLevel !== "off") {
+      if (resolvedOptions.debugLevel !== 'off') {
         context.logger.log(`✅ Found ${fileCache.size} export files`);
       }
 
@@ -107,8 +116,8 @@ function triggerkit(options?: PluginOptions): BuildExtension {
       const triggerKitPlugin: Plugin = {
         name: 'virtual-triggerkit-module',
         setup(build) {
-          if (resolvedOptions.debugLevel === "verbose") {
-            context.logger.log("🔧 Setting up esbuild plugin");
+          if (resolvedOptions.debugLevel === 'verbose') {
+            context.logger.log('🔧 Setting up esbuild plugin');
           }
 
           // Enhance module resolution
@@ -130,18 +139,18 @@ function triggerkit(options?: PluginOptions): BuildExtension {
 
           // Handle requests for our virtual module
           build.onResolve({ filter: /^virtual:triggerkit$/ }, (args) => {
-            if (resolvedOptions.debugLevel === "verbose") {
-              context.logger.log("🎯 VIRTUAL MODULE REQUESTED!", args);
+            if (resolvedOptions.debugLevel === 'verbose') {
+              context.logger.log('🎯 VIRTUAL MODULE REQUESTED!', args);
             }
             if (fileCache.size === 0) {
-              if (resolvedOptions.debugLevel !== "off") {
-                context.logger.warn("❌ No export files found when resolving virtual module");
+              if (resolvedOptions.debugLevel !== 'off') {
+                context.logger.warn('❌ No export files found when resolving virtual module');
               }
               return { errors: [{ text: 'No export files found' }] };
             }
 
-            if (resolvedOptions.debugLevel === "verbose") {
-              context.logger.log("✅ Resolving virtual:triggerkit module");
+            if (resolvedOptions.debugLevel === 'verbose') {
+              context.logger.log('✅ Resolving virtual:triggerkit module');
             }
             return {
               path: VIRTUAL_MODULE_ID,
@@ -159,13 +168,13 @@ function triggerkit(options?: PluginOptions): BuildExtension {
 
           // Handle loading the virtual module
           build.onLoad({ filter: /.*/, namespace: NAMESPACE }, async () => {
-            if (resolvedOptions.debugLevel === "verbose") {
-              context.logger.log("📦 LOADING VIRTUAL MODULE CONTENT");
+            if (resolvedOptions.debugLevel === 'verbose') {
+              context.logger.log('📦 LOADING VIRTUAL MODULE CONTENT');
             }
 
             if (fileCache.size === 0) {
-              if (resolvedOptions.debugLevel !== "off") {
-                context.logger.warn("❌ No export files found when loading virtual module");
+              if (resolvedOptions.debugLevel !== 'off') {
+                context.logger.warn('❌ No export files found when loading virtual module');
               }
               return { errors: [{ text: 'No export files found' }] };
             }
@@ -178,39 +187,39 @@ function triggerkit(options?: PluginOptions): BuildExtension {
               context
             );
 
-            if (resolvedOptions.debugLevel === "verbose") {
-              context.logger.log("📝 Generated module content (first 500 chars):");
+            if (resolvedOptions.debugLevel === 'verbose') {
+              context.logger.log('📝 Generated module content (first 500 chars):');
               context.logger.log(moduleContent.substring(0, 500));
             }
 
             return {
               contents: moduleContent,
-              loader: 'ts',
+              loader: 'ts'
             } as OnLoadResult;
           });
-        },
+        }
       };
 
       // Register the plugin
       context.registerPlugin(triggerKitPlugin);
-      context.logger.log("✅ Plugin registered");
+      context.logger.log('✅ Plugin registered');
 
       // Generate type declarations
       generateFunctionTypeDeclarations(context, fileCache, resolvedOptions.includeTypes);
 
       // Add function files as a layer to ensure they're included in the build
       const layerFiles: Record<string, string> = {};
-      for (const [filePath, _] of fileCache.entries()) {
+      for (const [filePath] of fileCache.entries()) {
         const relativePath = path.relative(context.workingDir, filePath);
         layerFiles[relativePath] = filePath;
       }
 
       context.addLayer({
-        id: "triggerkit-layer",
+        id: 'triggerkit-layer',
         files: layerFiles
       });
 
-      context.logger.log("🎉 Triggerkit setup complete!");
+      context.logger.log('🎉 Triggerkit setup complete!');
     }
   };
 }
@@ -238,7 +247,7 @@ function extractExportedItems(
       /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(async\s+)?function\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?/g,
 
       // export const name = async? (params) => (without explicit return type)
-      /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(async\s+)?\(([^)]*)\)\s*=>/g,
+      /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(async\s+)?\(([^)]*)\)\s*=>/g
     ];
 
     for (const pattern of functionPatterns) {
@@ -264,7 +273,6 @@ function extractExportedItems(
             returnType = returnType === 'any' ? 'Promise<any>' : `Promise<${returnType}>`;
           }
           signature += `: ${returnType}`;
-
         } else if (pattern.source.includes('\\)\\s*:\\s*([^=>{]+)\\s*=>')) {
           // Pattern 2: export const name = async? (params): ReturnType =>
           name = match[1];
@@ -273,7 +281,6 @@ function extractExportedItems(
           returnType = match[4] ? match[4].trim() : 'any';
 
           signature = `const ${name}: (${params}) => ${returnType}`;
-
         } else if (pattern.source.includes(':\\s*([^=]+)\\s*=\\s*(async\\s+)?function')) {
           // Pattern 3: export const name: Type = async? function
           name = match[1];
@@ -283,7 +290,6 @@ function extractExportedItems(
           signature = `const ${name}: ${typeAnnotation}`;
           returnType = typeAnnotation;
           params = '';
-
         } else if (pattern.source.includes('function\\s*\\(([^)]*)\\)(?:\\s*:\\s*([^{]+))?')) {
           // Pattern 4: export const name = async? function(params): ReturnType
           name = match[1];
@@ -292,7 +298,6 @@ function extractExportedItems(
           returnType = match[4] ? match[4].trim() : 'any';
 
           signature = `const ${name}: (${params}) => ${isAsync ? `Promise<${returnType}>` : returnType}`;
-
         } else {
           // Pattern 5: export const name = async? (params) => (no explicit return type)
           name = match[1];
@@ -304,7 +309,7 @@ function extractExportedItems(
         }
 
         // Don't add duplicates
-        if (!exportedItems.some(item => item.name === name)) {
+        if (!exportedItems.some((item) => item.name === name)) {
           exportedItems.push({
             name,
             type: 'function',
@@ -320,7 +325,8 @@ function extractExportedItems(
 
   // Class patterns
   if (includeTypes.classes) {
-    const classPattern = /export\s+(?:abstract\s+)?class\s+([a-zA-Z0-9_$]+)(\s*<[^>]*>)?(?:\s+extends\s+([^{]+?))?(?:\s+implements\s+([^{]+?))?/g;
+    const classPattern =
+      /export\s+(?:abstract\s+)?class\s+([a-zA-Z0-9_$]+)(\s*<[^>]*>)?(?:\s+extends\s+([^{]+?))?(?:\s+implements\s+([^{]+?))?/g;
 
     let match;
     while ((match = classPattern.exec(content)) !== null) {
@@ -362,7 +368,7 @@ function extractExportedItems(
         classBody = classBody.replace(/\/\*[\s\S]*?\*\//g, '');
       }
 
-      let classInfo: {
+      const classInfo: {
         methods: Array<{ name: string; signature: string; isStatic: boolean }>;
         properties: Array<{ name: string; type: string; isStatic: boolean }>;
         constructor?: { params: string };
@@ -373,7 +379,6 @@ function extractExportedItems(
       };
 
       if (classBody) {
-
         // Extract constructor
         const constructorMatch = classBody.match(/constructor\s*\(([^)]*)\)/);
         if (constructorMatch) {
@@ -382,26 +387,28 @@ function extractExportedItems(
 
         // Extract methods by removing method bodies first
         // Strategy: Remove everything between { } for each method, leaving only signatures
-        let classBodyForParsing = classBody;
-
         // Remove method bodies by finding each method and removing its body
         // First, let's find method declarations and extract just the signatures
-        const methodSignatureRegex = /^\s{2,4}(static\s+)?(async\s+)?([a-zA-Z0-9_$]+)\s*\(([^)]*)\)(?:\s*:\s*([^\{]+))?\s*\{/gm;
+        const methodSignatureRegex =
+          /^\s{2,4}(static\s+)?(async\s+)?([a-zA-Z0-9_$]+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*{/gm;
         let methodMatch;
 
         while ((methodMatch = methodSignatureRegex.exec(classBody)) !== null) {
-          const fullMatch = methodMatch[0];
           const isStatic = !!methodMatch[1];
           const isAsync = !!methodMatch[2];
           const methodName = methodMatch[3];
           const methodParams = methodMatch[4] || '';
-          let methodReturnType = methodMatch[5] ? methodMatch[5].trim() : (isAsync ? 'Promise<any>' : 'any');
+          const methodReturnType = methodMatch[5]
+            ? methodMatch[5].trim()
+            : isAsync
+              ? 'Promise<any>'
+              : 'any';
 
           // Skip constructor (already handled)
           if (methodName === 'constructor') continue;
 
           // Skip if already added
-          if (classInfo.methods.some(m => m.name === methodName)) continue;
+          if (classInfo.methods.some((m) => m.name === methodName)) continue;
 
           const methodSignature = `${isStatic ? 'static ' : ''}${isAsync ? 'async ' : ''}${methodName}(${methodParams}): ${methodReturnType}`;
 
@@ -413,7 +420,8 @@ function extractExportedItems(
         }
 
         // Extract properties - only match at class level (2-4 spaces indentation, ending with semicolon or =)
-        const propertyRegex = /^\s{2,4}(static\s+)?(readonly\s+)?([a-zA-Z0-9_$]+)\s*:\s*([^;=]+)[;=]/gm;
+        const propertyRegex =
+          /^\s{2,4}(static\s+)?(readonly\s+)?([a-zA-Z0-9_$]+)\s*:\s*([^;=]+)[;=]/gm;
         let propertyMatch;
         while ((propertyMatch = propertyRegex.exec(classBody)) !== null) {
           const isStatic = !!propertyMatch[1];
@@ -455,7 +463,7 @@ function extractExportedItems(
       const type = match[2].trim();
 
       // Skip if it's already identified as a function
-      if (!exportedItems.some(item => item.name === name)) {
+      if (!exportedItems.some((item) => item.name === name)) {
         exportedItems.push({
           name,
           type: 'const',
@@ -474,15 +482,18 @@ function extractExportedItems(
     for (const statement of exportStatements) {
       const match = statement.match(/export\s*\{\s*([^}]+)\s*\}/);
       if (match) {
-        const exports = match[1].split(',').map(item => {
+        const exports = match[1].split(',').map((item) => {
           const cleaned = item.trim().split(/\s+as\s+/)[0];
           return cleaned.trim();
         });
 
         for (const exportName of exports) {
-          if (!exportedItems.some(item => item.name === exportName)) {
+          if (!exportedItems.some((item) => item.name === exportName)) {
             // Try to determine the type by looking for declarations
-            if (includeTypes.classes && new RegExp(`(?:abstract\\s+)?class\\s+${exportName}\\s*[<{]`).test(content)) {
+            if (
+              includeTypes.classes &&
+              new RegExp(`(?:abstract\\s+)?class\\s+${exportName}\\s*[<{]`).test(content)
+            ) {
               exportedItems.push({
                 name: exportName,
                 type: 'class',
@@ -492,7 +503,12 @@ function extractExportedItems(
                 params: '',
                 classInfo: { methods: [], properties: [], constructor: undefined }
               });
-            } else if (includeTypes.functions && new RegExp(`(?:function\\s+${exportName}|const\\s+${exportName}\\s*=\\s*(?:async\\s+)?(?:function|\\())`).test(content)) {
+            } else if (
+              includeTypes.functions &&
+              new RegExp(
+                `(?:function\\s+${exportName}|const\\s+${exportName}\\s*=\\s*(?:async\\s+)?(?:function|\\())`
+              ).test(content)
+            ) {
               exportedItems.push({
                 name: exportName,
                 type: 'function',
@@ -510,13 +526,11 @@ function extractExportedItems(
   return exportedItems;
 }
 // Helper function to load SvelteKit environment variables
-async function loadSvelteKitEnvironment(context: any, debugLevel: Required<PluginOptions>['debugLevel']): Promise<void> {
-  const envFiles = [
-    '.env',
-    '.env.local',
-    '.env.development',
-    '.env.development.local'
-  ];
+async function loadSvelteKitEnvironment(
+  context: any,
+  debugLevel: Required<PluginOptions>['debugLevel']
+): Promise<void> {
+  const envFiles = ['.env', '.env.local', '.env.development', '.env.development.local'];
 
   let totalEnvVarsLoaded = 0;
 
@@ -526,41 +540,47 @@ async function loadSvelteKitEnvironment(context: any, debugLevel: Required<Plugi
       try {
         const envContent = fs.readFileSync(envPath, 'utf-8');
         const envVars = parseEnvFile(envContent);
-        if (debugLevel === "verbose") {
+        if (debugLevel === 'verbose') {
           context.logger.log(`🔍 Found ${Object.keys(envVars).length} variables in ${envFile}:`);
         }
         // Set environment variables
         for (const [key, value] of Object.entries(envVars)) {
           if (!process.env[key]) {
             process.env[key] = value;
-            context.logger.log(`  ✅ ${key} = ${value.substring(0, 20)}${value.length > 20 ? '...' : ''}`);
+            context.logger.log(
+              `  ✅ ${key} = ${value.substring(0, 20)}${value.length > 20 ? '...' : ''}`
+            );
             totalEnvVarsLoaded++;
           } else {
             context.logger.log(`  ⚠️  ${key} already set, skipping`);
           }
         }
 
-        if (debugLevel !== "off") {
-          context.logger.log(`🌍 Loaded ${Object.keys(envVars).length} environment variables from ${envFile}`);
+        if (debugLevel !== 'off') {
+          context.logger.log(
+            `🌍 Loaded ${Object.keys(envVars).length} environment variables from ${envFile}`
+          );
         }
       } catch (error) {
-        if (debugLevel !== "off") {
+        if (debugLevel !== 'off') {
           context.logger.warn(`⚠️  Could not load ${envFile}:`, error);
         }
       }
-    } else if (debugLevel === "verbose") {
+    } else if (debugLevel === 'verbose') {
       context.logger.log(`📝 ${envFile} not found`);
     }
   }
 
   // Debug: Show specific variables we care about
-  if (debugLevel === "verbose") {
+  if (debugLevel === 'verbose') {
     const importantVars = ['PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
     context.logger.log(`🔍 Checking important environment variables:`);
     for (const varName of importantVars) {
       const value = process.env[varName];
       if (value) {
-        context.logger.log(`  ✅ ${varName} = ${value.substring(0, 20)}${value.length > 20 ? '...' : ''}`);
+        context.logger.log(
+          `  ✅ ${varName} = ${value.substring(0, 20)}${value.length > 20 ? '...' : ''}`
+        );
       } else {
         context.logger.log(`  ❌ ${varName} = undefined`);
       }
@@ -609,16 +629,23 @@ async function scanFolderForExports(
       const fullPath = path.join(folderPath, file.name);
 
       // Skip entries that match exclude patterns
-      if (excludePatterns.some(pattern => file.name.includes(pattern))) {
+      if (excludePatterns.some((pattern) => file.name.includes(pattern))) {
         continue;
       }
 
       if (file.isDirectory()) {
         // Recursively scan subdirectories
-        await scanFolderForExports(fullPath, filePatterns, excludePatterns, fileCache, context, includeTypes);
+        await scanFolderForExports(
+          fullPath,
+          filePatterns,
+          excludePatterns,
+          fileCache,
+          context,
+          includeTypes
+        );
       } else if (file.isFile()) {
         // Check if the file matches our patterns
-        const hasMatchingExtension = filePatterns.some(ext => file.name.endsWith(ext));
+        const hasMatchingExtension = filePatterns.some((ext) => file.name.endsWith(ext));
 
         if (hasMatchingExtension) {
           // Get file stats to check modification time
@@ -641,17 +668,22 @@ async function scanFolderForExports(
               const exportedItems = extractExportedItems(transformedContent, includeTypes);
 
               if (exportedItems.length > 0) {
-                const exportTypes = exportedItems.map(item => item.type);
-                const typeCounts = exportTypes.reduce((acc, type) => {
-                  acc[type] = (acc[type] || 0) + 1;
-                  return acc;
-                }, {} as Record<string, number>);
+                const exportTypes = exportedItems.map((item) => item.type);
+                const typeCounts = exportTypes.reduce(
+                  (acc, type) => {
+                    acc[type] = (acc[type] || 0) + 1;
+                    return acc;
+                  },
+                  {} as Record<string, number>
+                );
 
                 const typeCountStr = Object.entries(typeCounts)
                   .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
                   .join(', ');
 
-                console.log(`✅ Found ${exportedItems.length} exports in ${file.name}: ${typeCountStr}`);
+                console.log(
+                  `✅ Found ${exportedItems.length} exports in ${file.name}: ${typeCountStr}`
+                );
 
                 fileCache.set(fullPath, {
                   path: fullPath,
@@ -690,26 +722,33 @@ async function scanFolderForEnvVars(
       const fullPath = path.join(dirPath, file.name);
 
       // Skip excluded files
-      if (excludePatterns.some(pattern => file.name.includes(pattern))) continue;
+      if (excludePatterns.some((pattern) => file.name.includes(pattern))) continue;
 
       if (file.isDirectory()) {
         // Recursively scan subdirectories
-        await scanFolderForEnvVars(fullPath, filePatterns, excludePatterns, envVars, context, debugLevel);
-      } else if (file.isFile() && filePatterns.some(ext => file.name.endsWith(ext))) {
+        await scanFolderForEnvVars(
+          fullPath,
+          filePatterns,
+          excludePatterns,
+          envVars,
+          context,
+          debugLevel
+        );
+      } else if (file.isFile() && filePatterns.some((ext) => file.name.endsWith(ext))) {
         try {
           // Read file content
           const content = fs.readFileSync(fullPath, 'utf8');
           // Extract env vars
           extractEnvironmentVariables(content, envVars);
         } catch (error) {
-          if (debugLevel !== "off") {
+          if (debugLevel !== 'off') {
             context.logger.warn(`Error reading file: ${fullPath}`, error);
           }
         }
       }
     }
   } catch (error) {
-    if (debugLevel !== "off") {
+    if (debugLevel !== 'off') {
       context.logger.warn(`Error scanning dir for env vars: ${dirPath}`, error);
     }
   }
@@ -721,7 +760,7 @@ function transformSvelteKitEnvImports(source: string): string {
     /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static\/(?:public|private))['"]/g,
     (match: string, imports: string) => {
       // Parse the imported variables
-      const variables = imports.split(',').map(v => v.trim());
+      const variables = imports.split(',').map((v) => v.trim());
       // Generate a destructuring assignment from process.env
       const result = `const { ${variables.join(', ')} } = process.env;\n`;
       return result;
@@ -729,6 +768,8 @@ function transformSvelteKitEnvImports(source: string): string {
   );
 }
 // Enhanced function to extract function signatures with full type information
+// Kept alongside extractExportedItems for consistency (see AGENTS.md); not currently used
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function extractFunctionSignatures(content: string): Array<{
   name: string;
   signature: string;
@@ -759,7 +800,7 @@ function extractFunctionSignatures(content: string): Array<{
     /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(async\s+)?function\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?/g,
 
     // export const name = async? (params) => (without explicit return type)
-    /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(async\s+)?\(([^)]*)\)\s*=>/g,
+    /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(async\s+)?\(([^)]*)\)\s*=>/g
   ];
 
   for (const pattern of patterns) {
@@ -785,7 +826,6 @@ function extractFunctionSignatures(content: string): Array<{
           returnType = returnType === 'any' ? 'Promise<any>' : `Promise<${returnType}>`;
         }
         signature += `: ${returnType}`;
-
       } else if (pattern.source.includes('\\)\\s*:\\s*([^=>{]+)\\s*=>')) {
         // Pattern 2: export const name = async? (params): ReturnType =>
         name = match[1];
@@ -794,7 +834,6 @@ function extractFunctionSignatures(content: string): Array<{
         returnType = match[4] ? match[4].trim() : 'any';
 
         signature = `const ${name}: (${params}) => ${returnType}`;
-
       } else if (pattern.source.includes(':\\s*([^=]+)\\s*=\\s*(async\\s+)?function')) {
         // Pattern 3: export const name: Type = async? function
         name = match[1];
@@ -804,7 +843,6 @@ function extractFunctionSignatures(content: string): Array<{
         signature = `const ${name}: ${typeAnnotation}`;
         returnType = typeAnnotation;
         params = '';
-
       } else if (pattern.source.includes('function\\s*\\(([^)]*)\\)(?:\\s*:\\s*([^{]+))?')) {
         // Pattern 4: export const name = async? function(params): ReturnType
         name = match[1];
@@ -813,7 +851,6 @@ function extractFunctionSignatures(content: string): Array<{
         returnType = match[4] ? match[4].trim() : 'any';
 
         signature = `const ${name}: (${params}) => ${isAsync ? `Promise<${returnType}>` : returnType}`;
-
       } else {
         // Pattern 5: export const name = async? (params) => (no explicit return type)
         name = match[1];
@@ -825,7 +862,7 @@ function extractFunctionSignatures(content: string): Array<{
       }
 
       // Don't add duplicates
-      if (!functionSignatures.some(f => f.name === name)) {
+      if (!functionSignatures.some((f) => f.name === name)) {
         functionSignatures.push({
           name,
           signature,
@@ -843,7 +880,7 @@ function extractFunctionSignatures(content: string): Array<{
     for (const statement of exportStatements) {
       const match = statement.match(/export\s*\{\s*([^}]+)\s*\}/);
       if (match) {
-        const exports = match[1].split(',').map(item => {
+        const exports = match[1].split(',').map((item) => {
           const cleaned = item.trim().split(/\s+as\s+/)[0];
           return cleaned.trim();
         });
@@ -851,15 +888,21 @@ function extractFunctionSignatures(content: string): Array<{
         for (const exportName of exports) {
           // Look for the function declaration in the content
           const patterns = [
-            new RegExp(`(async\\s+)?function\\s+${exportName}\\s*(\\<[^>]*\\>)?\\s*\\(([^)]*)\\)(?:\\s*:\\s*([^{;]+))?`, 'g'),
-            new RegExp(`const\\s+${exportName}\\s*=\\s*(async\\s+)?\\(([^)]*)\\)\\s*:\\s*([^=>{]+)\\s*=>`, 'g'),
+            new RegExp(
+              `(async\\s+)?function\\s+${exportName}\\s*(\\<[^>]*\\>)?\\s*\\(([^)]*)\\)(?:\\s*:\\s*([^{;]+))?`,
+              'g'
+            ),
+            new RegExp(
+              `const\\s+${exportName}\\s*=\\s*(async\\s+)?\\(([^)]*)\\)\\s*:\\s*([^=>{]+)\\s*=>`,
+              'g'
+            ),
             new RegExp(`const\\s+${exportName}\\s*=\\s*(async\\s+)?\\(([^)]*)\\)\\s*=>`, 'g'),
-            new RegExp(`const\\s+${exportName}\\s*:\\s*([^=]+)\\s*=`, 'g'),
+            new RegExp(`const\\s+${exportName}\\s*:\\s*([^=]+)\\s*=`, 'g')
           ];
 
           for (const funcPattern of patterns) {
             const funcMatch = funcPattern.exec(content);
-            if (funcMatch && !functionSignatures.some(f => f.name === exportName)) {
+            if (funcMatch && !functionSignatures.some((f) => f.name === exportName)) {
               let isAsync: boolean;
               let params: string;
               let returnType: string;
@@ -876,21 +919,18 @@ function extractFunctionSignatures(content: string): Array<{
                   returnType = returnType === 'any' ? 'Promise<any>' : `Promise<${returnType}>`;
                 }
                 signature += `: ${returnType}`;
-
               } else if (funcPattern.source.includes('\\)\\s*:\\s*([^=>{]+)')) {
                 isAsync = !!funcMatch[1];
                 params = funcMatch[2] || '';
                 returnType = funcMatch[3] ? funcMatch[3].trim() : 'any';
 
                 signature = `const ${exportName}: (${params}) => ${returnType}`;
-
               } else if (funcPattern.source.includes('\\)\\s*=>')) {
                 isAsync = !!funcMatch[1];
                 params = funcMatch[2] || '';
                 returnType = isAsync ? 'Promise<any>' : 'any';
 
                 signature = `const ${exportName}: (${params}) => ${returnType}`;
-
               } else {
                 const typeAnnotation = funcMatch[1] ? funcMatch[1].trim() : 'any';
                 signature = `const ${exportName}: ${typeAnnotation}`;
@@ -919,12 +959,13 @@ function extractFunctionSignatures(content: string): Array<{
 // Helper function to extract environment variables from a file
 function extractEnvironmentVariables(source: string, envVars: Set<string>): void {
   // Find all imports from $env/static/public or $env/static/private
-  const envImportRegex = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static\/(?:public|private))['"]/g;
+  const envImportRegex =
+    /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static\/(?:public|private))['"]/g;
   let match;
 
   // Process all env imports (both public and private)
   while ((match = envImportRegex.exec(source)) !== null) {
-    const variables = match[1].split(',').map(v => v.trim());
+    const variables = match[1].split(',').map((v) => v.trim());
     for (const varName of variables) {
       envVars.add(varName);
     }
@@ -946,7 +987,9 @@ function generateVirtualModuleContent(
 
     for (const varName of envVars) {
       const envValue = process.env[varName];
-      context.logger.log(`  📝 ${varName} = ${envValue ? envValue.substring(0, 20) + (envValue.length > 20 ? '...' : '') : 'undefined'}`);
+      context.logger.log(
+        `  📝 ${varName} = ${envValue ? envValue.substring(0, 20) + (envValue.length > 20 ? '...' : '') : 'undefined'}`
+      );
 
       moduleContent += `export const ${varName} = process.env.${varName};\n`;
     }
@@ -978,11 +1021,11 @@ function generateVirtualModuleContent(
 
   const exportStrategy = options.exportStrategy;
 
-  if (exportStrategy.mode === "individual") {
+  if (exportStrategy.mode === 'individual') {
     return generateIndividualExports(filesByFolder, moduleContent);
-  } else if (exportStrategy.mode === "grouped") {
+  } else if (exportStrategy.mode === 'grouped') {
     return generateGroupedExports(filesByFolder, moduleContent, exportStrategy);
-  } else if (exportStrategy.mode === "mixed") {
+  } else if (exportStrategy.mode === 'mixed') {
     return generateMixedExports(filesByFolder, moduleContent, exportStrategy);
   }
 
@@ -991,33 +1034,38 @@ function generateVirtualModuleContent(
 function generateGroupedExports(
   filesByFolder: Record<string, Map<string, FileWithExports>>,
   moduleContent: string,
-  strategy: NonNullable<Required<PluginOptions>["exportStrategy"]>
+  strategy: NonNullable<Required<PluginOptions>['exportStrategy']>
 ): string {
   const groups: Record<string, string[]> = {};
   const imports: string[] = [];
 
   // Organize exports into groups
   for (const [folder, files] of Object.entries(filesByFolder)) {
-    for (const [_, fileInfo] of files.entries()) {
+    for (const [, fileInfo] of files.entries()) {
       const importPath = fileInfo.relPath.replace(/\.(ts|js)$/, '');
-      const importNames = fileInfo.exportedItems.map(item => item.name).join(', ');
+      const importNames = fileInfo.exportedItems.map((item) => item.name).join(', ');
       imports.push(`import { ${importNames} } from '${importPath}';`);
 
       for (const item of fileInfo.exportedItems) {
         let groupName: string;
 
         switch (strategy.groupBy) {
-          case "file":
-            const fileName = fileInfo.relPath.split('/').pop()?.replace(/\.(ts|js)$/, '') || 'default';
+          case 'file': {
+            const fileName =
+              fileInfo.relPath
+                .split('/')
+                .pop()
+                ?.replace(/\.(ts|js)$/, '') || 'default';
             groupName = strategy.groupPrefix ? `${strategy.groupPrefix}_${fileName}` : fileName;
             break;
-
-          case "folder":
-            const folderName = folder.replace(/[\/\\]/g, '_');
+          }
+          case 'folder': {
+            const folderName = folder.replace(/[/\\]/g, '_');
             groupName = strategy.groupPrefix ? `${strategy.groupPrefix}_${folderName}` : folderName;
             break;
+          }
           default:
-            groupName = folder.replace(/[\/\\]/g, '_');
+            groupName = folder.replace(/[/\\]/g, '_');
         }
 
         // Sanitize group name
@@ -1051,11 +1099,11 @@ function generateGroupedExports(
   moduleContent += `export { ${allExports.join(', ')} };\n\n`;
 
   // Export functions object
-  const allFunctions = allExports.filter(name => {
+  const allFunctions = allExports.filter((name) => {
     // Find the item to check its type
     for (const files of Object.values(filesByFolder)) {
       for (const fileInfo of files.values()) {
-        const item = fileInfo.exportedItems.find(item => item.name === name);
+        const item = fileInfo.exportedItems.find((item) => item.name === name);
         if (item) return item.type === 'function';
       }
     }
@@ -1076,13 +1124,18 @@ function generateGroupedExports(
 function generateMixedExports(
   filesByFolder: Record<string, Map<string, FileWithExports>>,
   moduleContent: string,
-  strategy: NonNullable<Required<PluginOptions>["exportStrategy"]>
+  strategy: NonNullable<Required<PluginOptions>['exportStrategy']>
 ): string {
   // Generate both individual and grouped exports
   const individualContent = generateIndividualExports(filesByFolder, '');
   const groupedContent = generateGroupedExports(filesByFolder, '', strategy);
 
-  return moduleContent + individualContent + '\n// Additional grouped exports\n' + groupedContent.split('// Imports\n')[1];
+  return (
+    moduleContent +
+    individualContent +
+    '\n// Additional grouped exports\n' +
+    groupedContent.split('// Imports\n')[1]
+  );
 }
 function generateIndividualExports(
   filesByFolder: Record<string, Map<string, FileWithExports>>,
@@ -1092,17 +1145,17 @@ function generateIndividualExports(
   for (const [folder, files] of Object.entries(filesByFolder)) {
     moduleContent += `// Exports from ${folder}\n`;
 
-    for (const [_, fileInfo] of files.entries()) {
+    for (const [, fileInfo] of files.entries()) {
       if (fileInfo.exportedItems.length === 0) continue;
 
       const importPath = fileInfo.relPath.replace(/\.(ts|js)$/, '');
-      const importNames = fileInfo.exportedItems.map(item => item.name).join(', ');
+      const importNames = fileInfo.exportedItems.map((item) => item.name).join(', ');
       moduleContent += `import { ${importNames} } from '${importPath}';\n`;
     }
 
     const allExportsInFolder: string[] = [];
     for (const fileInfo of files.values()) {
-      allExportsInFolder.push(...fileInfo.exportedItems.map(item => item.name));
+      allExportsInFolder.push(...fileInfo.exportedItems.map((item) => item.name));
     }
 
     if (allExportsInFolder.length > 0) {
@@ -1114,7 +1167,11 @@ function generateIndividualExports(
   const allFunctions: string[] = [];
   for (const files of Object.values(filesByFolder)) {
     for (const fileInfo of files.values()) {
-      allFunctions.push(...fileInfo.exportedItems.filter(item => item.type === 'function').map(item => item.name));
+      allFunctions.push(
+        ...fileInfo.exportedItems
+          .filter((item) => item.type === 'function')
+          .map((item) => item.name)
+      );
     }
   }
 
@@ -1192,7 +1249,10 @@ function generateFunctionTypeDeclarations(
                 declarationContent += `  export ${item.signature};\n`;
               } else if (item.signature.startsWith('const')) {
                 // Convert const signature to export declaration
-                const funcDeclaration = item.signature.replace(/^const\s+(\w+):\s*/, 'export declare const $1: ');
+                const funcDeclaration = item.signature.replace(
+                  /^const\s+(\w+):\s*/,
+                  'export declare const $1: '
+                );
                 declarationContent += `  ${funcDeclaration};\n`;
               } else {
                 // Fallback to basic function declaration
@@ -1233,7 +1293,7 @@ function generateFunctionTypeDeclarations(
 
     // Generate environment variables if any
     const envVars = new Set<string>();
-    for (const [_, cachedFile] of fileCache.entries()) {
+    for (const [, cachedFile] of fileCache.entries()) {
       if (cachedFile.content) {
         extractEnvironmentVariables(cachedFile.content, envVars);
       }
@@ -1267,7 +1327,9 @@ function generateFunctionTypeDeclarations(
       const srcDeclPath = path.resolve(process.cwd(), `src/virtual-triggerkit.d.ts`);
       fs.writeFileSync(srcDeclPath, declarationContent);
       context.logger.log(`📝 Generated enhanced TypeScript declaration file at: ${srcDeclPath}`);
-      context.logger.log(`🎯 Included ${allFunctionNames.length} functions with full type information`);
+      context.logger.log(
+        `🎯 Included ${allFunctionNames.length} functions with full type information`
+      );
     } catch (error) {
       context.logger.warn(`Error writing declaration file:`, error);
     }
@@ -1276,4 +1338,4 @@ function generateFunctionTypeDeclarations(
   }
 }
 
-export { triggerkit, VIRTUAL_MODULE_ID }
+export { triggerkit, VIRTUAL_MODULE_ID };
