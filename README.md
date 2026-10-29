@@ -18,7 +18,7 @@ changes.
 - 📁 Flexible organization - Group exports by file, folder, or custom logic
 - 🔍 Rich TypeScript support - Preserves generics, complex types, and method
   signatures
-- 🌐 Environment variables - Automatic SvelteKit env handling ($env/static/*)
+- 🌐 Environment variables - Automatic SvelteKit env handling ($app/env/*)
 - 🎯 Configurable scanning - Control what gets exported and how
 - 🚀 Works with Trigger.dev V3
 - 🔧 Debug levels - Control logging verbosity for clean development
@@ -239,12 +239,16 @@ const result = await service.processPayment({ amount: 100, currency: 'USD' });
 
 #### Environment Variables
 
-Triggerkit automatically handles SvelteKit environment variables:
+Triggerkit automatically handles SvelteKit environment variables, reading them
+from trigger.dev's environment at runtime:
 
 ```typescript
-// SvelteKit code
-import { DATABASE_URL } from '$env/static/private';
-import { PUBLIC_API_URL } from '$env/static/public';
+// SvelteKit code (SvelteKit 2.62+ / 3)
+import { DATABASE_URL } from '$app/env/private';
+import { PUBLIC_API_URL } from '$app/env/public';
+
+// The legacy $env/static/* modules are also supported:
+// import { DATABASE_URL } from '$env/static/private';
 
 export async function connectDB() {
   // Uses DATABASE_URL automatically

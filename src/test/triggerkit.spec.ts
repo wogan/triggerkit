@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { triggerkit } from '../lib/triggerkit';
+import {
+  triggerkit,
+  transformSvelteKitEnvImports,
+  extractEnvironmentVariables
+} from '../lib/triggerkit';
 import type { BuildExtension } from '@trigger.dev/build/extensions';
 import fs from 'fs';
 import { fail } from 'assert';
@@ -88,23 +92,41 @@ describe('Triggerkit Extension', () => {
   });
 
   // Test core functionality directly
-  it('should transform SvelteKit env imports to process.env', () => {
-    // Access the transformation function directly if possible
-    // This might require exporting it separately for testing
+  it('should transform legacy $env/static imports to process.env', () => {
     const input = `import { API_KEY } from '$env/static/private';`;
+    const result = transformSvelteKitEnvImports(input);
 
-    // If the function is exported or accessible, test it directly
-    if (typeof (triggerkit as any).transformSvelteKitEnvImports === 'function') {
-      const transform = (triggerkit as any).transformSvelteKitEnvImports;
-      const result = transform(input);
+    expect(result).toContain('const { API_KEY } = process.env;');
+    expect(result).not.toContain('$env/static/private');
+  });
 
-      // Basic validation
-      expect(result).toContain('process.env');
-      expect(result).toContain('API_KEY');
-    }
+  it('should transform $app/env/private imports to process.env', () => {
+    const input = `import { API_KEY, DB_URL } from '$app/env/private';`;
+    const result = transformSvelteKitEnvImports(input);
 
-    // Fallback test - just verify extension is created
-    expect(extension.onBuildStart).toBeDefined();
+    expect(result).toContain('const { API_KEY, DB_URL } = process.env;');
+    expect(result).not.toContain('$app/env/private');
+  });
+
+  it('should transform $app/env/public imports to process.env', () => {
+    const input = `import { PUBLIC_API_URL } from '$app/env/public';`;
+    const result = transformSvelteKitEnvImports(input);
+
+    expect(result).toContain('const { PUBLIC_API_URL } = process.env;');
+    expect(result).not.toContain('$app/env/public');
+  });
+
+  it('should extract env var names from $app/env and $env/static imports', () => {
+    const source = [
+      `import { API_KEY } from '$app/env/private';`,
+      `import { PUBLIC_API_URL } from '$app/env/public';`,
+      `import { LEGACY_KEY } from '$env/static/private';`
+    ].join('\n');
+
+    const envVars = new Set<string>();
+    extractEnvironmentVariables(source, envVars);
+
+    expect(envVars).toEqual(new Set(['API_KEY', 'PUBLIC_API_URL', 'LEGACY_KEY']));
   });
 
   // Test full build process

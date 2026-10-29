@@ -76,11 +76,11 @@ Everything lives in `src/lib/`:
 1. **Load env** — `loadSvelteKitEnvironment` reads `.env`, `.env.local`,
    `.env.development*` from the consumer's `workingDir` into `process.env`.
 2. **Scan** — `scanFolderForExports` recursively walks `includeDirs` (default `src/lib`),
-   reads each `.ts`/`.js` file, transforms `$env/static/*` imports, and caches files that
-   have extractable exports. `scanFolderForEnvVars` collects the env var names.
+   reads each `.ts`/`.js` file, transforms `$app/env/*` and `$env/static/*` imports, and
+   caches files that have extractable exports. `scanFolderForEnvVars` collects the env var names.
 3. **Register an esbuild plugin** that:
    - resolves `src/...` imports relative to `workingDir`,
-   - resolves `virtual:triggerkit` and `$env/static/(public|private)` to a virtual module,
+   - resolves `virtual:triggerkit` and `$app/env/(public|private)` / `$env/static/(public|private)` to a virtual module,
    - on load, emits the generated virtual module source.
 4. **Generate types** — `generateFunctionTypeDeclarations` writes `src/virtual-triggerkit.d.ts`
    into the **consumer's** project (`process.cwd()`), not this repo.
@@ -91,8 +91,8 @@ Everything lives in `src/lib/`:
 - `extractExportedItems(content, includeTypes)` — **regex-based** extraction of exported
   functions, classes, and constants (methods/properties/constructor for classes). This is
   the heart of the plugin and is _not_ a real TS AST parse — it is fragile.
-- `transformSvelteKitEnvImports(source)` — rewrites `import { X } from '$env/static/...'`
-  into `const { X } = process.env;`.
+- `transformSvelteKitEnvImports(source)` — rewrites `import { X } from '$app/env/...'`
+  (and legacy `$env/static/...`) into `const { X } = process.env;`.
 - `generateVirtualModuleContent` + `generateIndividualExports` / `generateGroupedExports` /
   `generateMixedExports` — build the virtual module source per `exportStrategy.mode`.
 - `generateFunctionTypeDeclarations` — emits the `.d.ts`.

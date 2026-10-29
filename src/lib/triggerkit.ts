@@ -158,8 +158,8 @@ function triggerkit(options?: PluginOptions): BuildExtension {
             };
           });
 
-          // Handle SvelteKit env imports
-          build.onResolve({ filter: /^\$env\/static\/(public|private)$/ }, () => {
+          // Handle SvelteKit env imports ($env/static/* legacy and $app/env/*)
+          build.onResolve({ filter: /^(\$env\/static|\$app\/env)\/(public|private)$/ }, () => {
             return {
               path: VIRTUAL_MODULE_ID,
               namespace: NAMESPACE
@@ -205,7 +205,7 @@ function triggerkit(options?: PluginOptions): BuildExtension {
       context.logger.log('✅ Plugin registered');
 
       // Generate type declarations
-      generateFunctionTypeDeclarations(context, fileCache, resolvedOptions.includeTypes);
+      generateFunctionTypeDeclarations(context, fileCache, resolvedOptions.includeTypes, envVars);
 
       // Add function files as a layer to ensure they're included in the build
       const layerFiles: Record<string, string> = {};
@@ -755,9 +755,9 @@ async function scanFolderForEnvVars(
 }
 // Helper function to transform SvelteKit env imports to use process.env
 function transformSvelteKitEnvImports(source: string): string {
-  // Transform imports from $env/static/public or $env/static/private
+  // Transform imports from $env/static/* (legacy) or $app/env/* (SvelteKit 2.62+)
   return source.replace(
-    /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static\/(?:public|private))['"]/g,
+    /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static|\$app\/env)\/(?:public|private)['"]/g,
     (match: string, imports: string) => {
       // Parse the imported variables
       const variables = imports.split(',').map((v) => v.trim());
@@ -958,9 +958,9 @@ function extractFunctionSignatures(content: string): Array<{
 }
 // Helper function to extract environment variables from a file
 function extractEnvironmentVariables(source: string, envVars: Set<string>): void {
-  // Find all imports from $env/static/public or $env/static/private
+  // Find all imports from $env/static/* (legacy) or $app/env/* (SvelteKit 2.62+)
   const envImportRegex =
-    /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static\/(?:public|private))['"]/g;
+    /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"](\$env\/static|\$app\/env)\/(?:public|private)['"]/g;
   let match;
 
   // Process all env imports (both public and private)
@@ -1195,7 +1195,8 @@ function generateFunctionTypeDeclarations(
     classes: true,
     constants: false,
     variables: false
-  }
+  },
+  envVars: Set<string> = new Set()
 ): void {
   try {
     // Build the declaration content
@@ -1291,14 +1292,9 @@ function generateFunctionTypeDeclarations(
       }
     }
 
-    // Generate environment variables if any
-    const envVars = new Set<string>();
-    for (const [, cachedFile] of fileCache.entries()) {
-      if (cachedFile.content) {
-        extractEnvironmentVariables(cachedFile.content, envVars);
-      }
-    }
-
+    // Generate environment variable declarations. The set is passed in from
+    // onBuildStart (which scans raw file content); the cached content has env
+    // imports already rewritten to process.env, so re-extracting here finds none.
     if (envVars.size > 0) {
       declarationContent += '  // Environment variables\n';
       for (const varName of envVars) {
@@ -1338,4 +1334,4 @@ function generateFunctionTypeDeclarations(
   }
 }
 
-export { triggerkit, VIRTUAL_MODULE_ID };
+export { triggerkit, VIRTUAL_MODULE_ID, transformSvelteKitEnvImports, extractEnvironmentVariables };
