@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   triggerkit,
   transformSvelteKitEnvImports,
-  extractEnvironmentVariables
+  extractEnvironmentVariables,
+  generateAppEnvModuleContent
 } from '../lib/triggerkit';
 import type { BuildExtension } from '@trigger.dev/build/extensions';
 import fs from 'fs';
@@ -114,6 +115,28 @@ describe('Triggerkit Extension', () => {
 
     expect(result).toContain('const { PUBLIC_API_URL } = process.env;');
     expect(result).not.toContain('$app/env/public');
+  });
+
+  it('should transform base $app/env imports to runtime constants', () => {
+    const input = `import { browser, dev } from '$app/env';`;
+    const result = transformSvelteKitEnvImports(input);
+
+    expect(result).toContain('const browser = false;');
+    expect(result).toContain("const dev = process.env.NODE_ENV !== 'production';");
+    expect(result).not.toContain("from '$app/env'");
+    // Must not be confused with $app/env/private or $app/env/public
+    expect(transformSvelteKitEnvImports(`import { X } from '$app/env/private';`)).toContain(
+      'const { X } = process.env;'
+    );
+  });
+
+  it('should generate $app/env virtual module content with all constants', () => {
+    const content = generateAppEnvModuleContent();
+
+    expect(content).toContain('export const browser = false;');
+    expect(content).toContain('export const building = false;');
+    expect(content).toContain("export const dev = process.env.NODE_ENV !== 'production';");
+    expect(content).toContain("export const version = process.env.npm_package_version ?? '';");
   });
 
   it('should extract env var names from $app/env and $env/static imports', () => {

@@ -18,7 +18,8 @@ changes.
 - 📁 Flexible organization - Group exports by file, folder, or custom logic
 - 🔍 Rich TypeScript support - Preserves generics, complex types, and method
   signatures
-- 🌐 Environment variables - Automatic SvelteKit env handling ($app/env/*)
+- 🌐 Environment variables - Automatic SvelteKit env handling ($app/env,
+  $app/env/\*, $env/static/\*)
 - 🎯 Configurable scanning - Control what gets exported and how
 - 🚀 Works with Trigger.dev V3
 - 🔧 Debug levels - Control logging verbosity for clean development
@@ -53,8 +54,8 @@ export default defineConfig({
 
 ```typescript
 // src/lib/server/email.ts
-import { EMAIL_API_KEY } from '$env/static/private';
-import { PUBLIC_APP_URL } from '$env/static/public';
+import { EMAIL_API_KEY } from '$app/env/private';
+import { PUBLIC_APP_URL } from '$app/env/public';
 
 export async function sendWelcomeEmail(userId: string, email: string) {
   // Your existing SvelteKit function - no changes needed!
@@ -257,6 +258,18 @@ export async function connectDB() {
 // In Trigger.dev - works seamlessly!
 import { connectDB } from 'virtual:triggerkit';
 await connectDB(); // DATABASE_URL is available via process.env
+```
+
+The base `$app/env` module is also supported, with its constants mapped to
+their trigger.dev task-runtime values:
+
+```typescript
+import { browser, dev } from '$app/env';
+
+// browser  -> false (tasks run in Node, not the browser)
+// building -> false (not a SvelteKit build)
+// dev      -> process.env.NODE_ENV !== 'production'
+// version  -> process.env.npm_package_version ?? ''
 ```
 
 ## 🎨 Type-Safe Development
